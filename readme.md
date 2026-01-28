@@ -1,1 +1,1 @@
-Code base for all EE368
+Task 1 code and documentation
