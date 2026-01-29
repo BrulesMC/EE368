@@ -1,7 +1,3 @@
 javascript backend (name)
-example command name:example return
-example command name:example return
-
-flask backend (name)
-example command:example return
-example command:example return
+commandname:input(string "input1" int 2):return(string "input1" int 2)
+use null if nothing, ex doathing:null:null
