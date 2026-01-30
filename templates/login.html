@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Task1 Login page</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <main>
+        <h1>Welcome to the login page</h1>
+        <form action="/login">
+            <label for="user_name">Username:</label>
+            <input type="text" id="user_name" name="user_name" placeholder="jondoe@gmail.com"><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password"><br><br>
+        </form>
+        <button type="redirect" onclick="redirectRegisterPage()"> new user? Register here</button>
+    </main>
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/redirect.js') }}"></script>
+  </body>
+</html>
