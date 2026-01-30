@@ -1,3 +1,10 @@
-javascript backend (name)
-commandname:input(string "input1" int 2):return(string "input1" int 2)
-use null if nothing, ex doathing:null:null
+javascript (Brendan)
+redirect.js(used by index.html,login.html,regiser.html)
+redirectLoginPage:null:null(redirects to page registered as /login
+redirectRegisterPage:null:null(redirects to page registered as /register
+redirectHomePage:null:null(redirects to page registered as /
+
+html (Brendan)
+index.html
+login.html
+register.html
