@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+</head>
+<body>
+
+<h1>You are logged in 🎉</h1>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+function logout() {
+  fetch('/api/logout', { method: 'POST' })
+    .then(() => window.location.href = '/');
+}
+</script>
+
+</body>
+</html>

@@ -1,9 +1,6 @@
 function redirectLoginPage(){
-    window.location.href = "/login";
+    window.location.href = "/";
 }
 function redirectRegisterPage(){
     window.location.href = "/register";
-}
-function redirectHomePage(){
-    window.location.href = "/";
 }
