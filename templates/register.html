@@ -11,14 +11,21 @@
   <h1>Create an account</h1>
 
   <form id="registerForm">
+    <label for="first_name">First Name:</label>
+    <input type="text" id="first_name" required><br><br>
+  
+    <label for="last_name">Last Name:</label>
+    <input type="text" id="last_name" required><br><br>
+  
     <label for="user_name">Email:</label>
     <input type="email" id="user_name" required><br><br>
-
+  
     <label for="password">Password:</label>
     <input type="password" id="password" required><br><br>
-
+  
     <button type="submit">Register</button>
   </form>
+
 
   <button onclick="redirectLoginPage()">Already have an account? Login</button>
 </main>
