@@ -5,11 +5,35 @@
 </head>
 <body>
 
-<h1>You are logged in 🎉</h1>
+<h1 id="welcome"></h1>
+<p id="email"></p>
 
 <button onclick="logout()">Logout</button>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/me')
+    .then(response => {
+      if (!response.ok) {
+        window.location.href = '/'; // not logged in
+        return;
+      }
+      return response.json();
+    })
+    .then(user => {
+      const fullName = `${user.first_name} ${user.last_name}`;
+
+      document.getElementById('welcome').textContent =
+        `Welcome, ${fullName} 🎉`;
+
+      document.getElementById('email').textContent =
+        `Email: ${user.email}`;
+    })
+    .catch(() => {
+      window.location.href = '/';
+    });
+});
+
 function logout() {
   fetch('/api/logout', { method: 'POST' })
     .then(() => window.location.href = '/');
