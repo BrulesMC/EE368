@@ -31,3 +31,9 @@ sends POST to /api/register : username and password
 redirects to /login on success : none
 alerts on failure : message from response
 |____________________________________________________________________________________|
+
+Drew Lubarsky
+|____________________________________________________________________________________|
+app.py
+creates flask server and renders the html templates.
+must have SQLAlchemy, werkzeug.security, anf flask installed to function.
