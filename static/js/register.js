@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const first_name = document.getElementById('first_name').value;
         const last_name = document.getElementById('last_name').value;
-        const username = document.getElementById('user_name').value;
+        const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
         fetch('/api/register', {
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify({
                 first_name,
                 last_name,
-                username,
+                email,
                 password
             })
         })
