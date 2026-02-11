@@ -111,10 +111,9 @@ def api_logout():
 @login_required
 def api_change_password():
     data = request.get_json()
-    current_password = data.get("current_password")
     new_password = data.get("new_password")
 
-    if not all([current_password, new_password]):
+    if not all([new_password]):
         return jsonify({"success": False, "message": "Missing fields"}), 400
 
     # Get the current logged-in user
@@ -123,9 +122,6 @@ def api_change_password():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
-    # Verify current password
-    if not check_password_hash(user.password, current_password):
-        return jsonify({"success": False, "message": "Current password is incorrect"}), 401
 
     # Update to new password
     user.password = generate_password_hash(new_password)
@@ -165,3 +161,4 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
