@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const fullName = `${user.first_name} ${user.last_name}`;
       document.getElementById('welcome').textContent =
-        `Hello ${fullName}, you have logged in`;
+        'Hello ' + fullName + ', you have logged in';
     })
     .catch(() => {
       window.location.href = '/';
