@@ -15,7 +15,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
@@ -23,12 +22,15 @@ class User(db.Model):
 # Helper: Login Required
 def login_required(route_function):
     def wrapper(*args, **kwargs):
+        print("Session in login_required:", dict(session))
+        print("user_id in session:", "user_id" in session)
         if "user_id" not in session:
+            print("No user_id found - redirecting to login")
             return redirect(url_for("login_page"))
+        print("user_id found - allowing access")
         return route_function(*args, **kwargs)
     wrapper.__name__ = route_function.__name__
     return wrapper
-
 
 # API: Register
 @app.post("/api/register")
@@ -37,14 +39,13 @@ def api_register():
 
     first_name = data.get("first_name")
     last_name = data.get("last_name")
-    username = data.get("username")
     email = data.get("email")
     password = data.get("password")
 
-    if not all([first_name, last_name, username, password]):
+    if not all([first_name, last_name, email, password]):
         return jsonify({"success": False, "message": "Missing fields"}), 400
 
-    if User.query.filter_by(username=username).first():
+    if User.query.filter_by(email=email).first():
         return jsonify({"success": False, "message": "User already exists"}), 400
 
     hashed_pw = generate_password_hash(password)
@@ -52,7 +53,6 @@ def api_register():
     new_user = User(
         first_name=first_name,
         last_name=last_name,
-        username=username,
         email=email,
         password=hashed_pw
     )
@@ -67,22 +67,37 @@ def api_register():
 @app.post("/api/login")
 def api_login():
     data = request.get_json()
-    username = data.get("username")
+    email = data.get("email")
     password = data.get("password")
 
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
-        return jsonify({"success": False, "message": "Invalid credentials"})
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
     # Create session
     session.permanent = True
     session["user_id"] = user.id
-    session["username"] = user.username
+    session["email"] = user.email
 
-    return jsonify({"success": True})
+    return jsonify({"success": True}), 200
 
 
+@app.get("/api/me")
+def api_me():
+    if "user_id" not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    user = User.query.get(session["user_id"])
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email
+    })
 
 # API: Logout
 @app.post("/api/logout")
@@ -118,23 +133,19 @@ def api_change_password():
 
     return jsonify({"success": True, "message": "Password changed successfully"}), 200
 
-
 # Protected Route
 @app.get("/home")
 @login_required
 def home_page():
-    return """
-    <h1>Logged in</h1>
-    <button onclick="logout()">Logout</button>
-    <script>
-    function logout() {
-        fetch('/api/logout', { method: 'POST' })
-            .then(() => window.location.href = '/');
-    }
-    </script>
-    """
+    return render_template("home.html")
 
-
+@app.get("/check-session")
+def check_session():
+    return jsonify({
+        "user_id": session.get("user_id"),
+        "email": session.get("email"),
+        "session_data": dict(session)
+    })
 
 # Public Pages
 @app.get("/")
@@ -144,6 +155,7 @@ def login_page():
 @app.get("/register")
 def register_page():
     return render_template("register.html")
+    return jsonify({"fail": False})
 
 @app.get("/reset")
 def reset_page():
@@ -152,5 +164,4 @@ def reset_page():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
     app.run(debug=True)
