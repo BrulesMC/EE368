@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, session, redirect, url_for, render_template
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -160,5 +161,5 @@ def reset_page():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)
 
