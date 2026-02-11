@@ -92,11 +92,31 @@ def api_logout():
 
 
 # API: Reset Password
-@app.post("/api/reset-password")
-def api_reset_password():
+@app.post("/api/change-password")
+@login_required
+def api_change_password():
     data = request.get_json()
-    email = data.get("email")
-    return jsonify({"success": True})
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    if not all([current_password, new_password]):
+        return jsonify({"success": False, "message": "Missing fields"}), 400
+
+    # Get the current logged-in user
+    user = User.query.get(session["user_id"])
+
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    # Verify current password
+    if not check_password_hash(user.password, current_password):
+        return jsonify({"success": False, "message": "Current password is incorrect"}), 401
+
+    # Update to new password
+    user.password = generate_password_hash(new_password)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Password changed successfully"}), 200
 
 
 # Protected Route
@@ -132,4 +152,5 @@ def reset_page():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
     app.run(debug=True)
