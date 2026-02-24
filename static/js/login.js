@@ -1,14 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
+
     const form = document.getElementById('loginForm');
+    const githubBtn = document.getElementById('githubLoginBtn');
 
+    // Standard login submit
     form.addEventListener('submit', function (event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
-        const username = document.getElementById('user_name').value;
+        const username = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        // Send POST request to the hidden endpoint
-        fetch('/api/login', {
+        fetch('/api/login_standard', {   // ✅ changed endpoint
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -18,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Redirect to the home page or another route
                 window.location.href = '/home';
             } else {
                 alert('Login failed: ' + data.message);
@@ -29,4 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('An error occurred during login.');
         });
     });
+
+    // GitHub OAuth login redirect
+    if (githubBtn) {
+        githubBtn.addEventListener('click', function () {
+            window.location.href = '/api/login_github';  // ✅ changed endpoint
+        });
+    }
+
 });
