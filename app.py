@@ -43,13 +43,23 @@ def api_register():
     email = data.get("email")
     password = data.get("password")
 
+<<<<<<< Updated upstream
     if not all([first_name, last_name, email, password]):
         return jsonify({"success": False, "message": "Missing fields"}), 400
+=======
+    if not username or not email or not password:
+        return jsonify({"error": "username, email, and password required"}), 400
+>>>>>>> Stashed changes
 
     if User.query.filter_by(email=email).first():
         return jsonify({"success": False, "message": "User already exists"}), 400
 
+<<<<<<< Updated upstream
     hashed_pw = generate_password_hash(password)
+=======
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "email already in use"}), 400
+>>>>>>> Stashed changes
 
     new_user = User(
         first_name=first_name,
@@ -63,6 +73,7 @@ def api_register():
 
     return jsonify({"success": True})
 
+<<<<<<< Updated upstream
 
 # API: Login
 @app.post("/api/login")
@@ -71,6 +82,89 @@ def api_login():
     email = data.get("email")
     password = data.get("password")
 
+=======
+# API: Standard Login
+@app.route("/api/login_standard", methods=["POST"])
+def login_standard():
+    data = request.json or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "email and password required"}), 400
+
+    user = User.query.filter_by(email=email, type="standard").first()
+
+    if not user or not user.password_hash:
+        return jsonify({"error": "invalid credentials"}), 401
+
+    if not check_password_hash(user.password_hash, password):
+        return jsonify({"error": "invalid credentials"}), 401
+
+    login_user(user)
+    return jsonify({"success": True, "user": user.to_dict()})
+
+
+
+# GitHub Login (Server-Side OAuth)
+@app.route("/login_github")
+def login_github_redirect():
+    params = {
+        "client_id": GITHUB_CLIENT_ID,
+        "redirect_uri": GITHUB_REDIRECT_URI,
+        "scope": "user:email"
+    }
+    query = "&".join([f"{k}={v}" for k, v in params.items()])
+    return redirect(f"https://github.com/login/oauth/authorize?{query}")
+
+
+@app.route("/github_callback")
+def github_callback():
+    code = request.args.get("code")
+    if not code:
+        return redirect("/")
+
+    # Exchange code for access token
+    token_res = requests.post(
+        "https://github.com/login/oauth/access_token",
+        headers={"Accept": "application/json"},
+        data={
+            "client_id": GITHUB_CLIENT_ID,
+            "client_secret": GITHUB_CLIENT_SECRET,
+            "code": code,
+            "redirect_uri": GITHUB_REDIRECT_URI
+        }
+    ).json()
+
+    access_token = token_res.get("access_token")
+    if not access_token:
+        return redirect("/")
+
+    # Fetch GitHub user info
+    user_res = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+
+    # Fetch email list
+    email_res = requests.get(
+        "https://api.github.com/user/emails",
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+
+    email = None
+    for e in email_res:
+        if e.get("primary"):
+            email = e.get("email")
+            break
+
+    if not email:
+        email = user_res.get("email")
+
+    username = user_res.get("login")
+
+    # Auto-create or fetch user
+>>>>>>> Stashed changes
     user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
