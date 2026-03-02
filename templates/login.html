@@ -1,30 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
+    <meta charset="UTF-8">
+    <title>Login</title>
 </head>
 <body>
 
-<main>
-  <h1>Login</h1>
+<h1>Login</h1>
 
-  <form id="loginForm">
-    <label for="email">Email:</label>
+<form id="loginForm">
+    <label>Email:</label>
     <input type="email" id="email" required><br><br>
 
-    <label for="password">Password:</label>
+    <label>Password:</label>
     <input type="password" id="password" required><br><br>
 
     <button type="submit">Login</button>
-    <button type="button" id="githubLoginBtn" class="github-btn">Login with GitHub</button>
-  </form>
+</form>
 
-  <button onclick="redirectRegisterPage()">New user?</button>
-</main>
+<br>
+
+<button id="githubBtn">Login with GitHub</button>
+<br><br>
+
+<button id="createAccountBtn">Create an account</button>
 
 <script src="{{ url_for('static', filename='js/login.js') }}"></script>
-<script src="{{ url_for('static', filename='js/redirect.js') }}"></script>
+
+<script>
+document.getElementById("githubBtn").addEventListener("click", () => {
+    window.location.href = "/login_github";
+});
+
+document.getElementById("createAccountBtn").addEventListener("click", () => {
+    window.location.href = "/register";
+});
+</script>
 
 </body>
 </html>

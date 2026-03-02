@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<h1>Register</h1>
+<h1>Create Account</h1>
 
 <form id="registerForm">
     <label>Username:</label>
@@ -21,7 +21,17 @@
     <button type="submit">Register</button>
 </form>
 
+<br>
+
+<button id="backToLoginBtn">Back to Login</button>
+
 <script src="{{ url_for('static', filename='js/register.js') }}"></script>
+
+<script>
+document.getElementById("backToLoginBtn").addEventListener("click", () => {
+    window.location.href = "/";
+});
+</script>
 
 </body>
 </html>
