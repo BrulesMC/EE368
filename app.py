@@ -9,7 +9,7 @@ import os
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
-# Session lifetime (RESTORED)
+# Session lifetime
 app.permanent_session_lifetime = timedelta(days=7)
 
 # Database
@@ -253,4 +253,5 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
     app.run(debug=True)
