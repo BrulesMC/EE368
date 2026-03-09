@@ -22,6 +22,8 @@
 
 <button id="githubBtn">Login with GitHub</button>
 <br><br>
+<button id="oauthBtn">Login with Oauth</button>
+<br><br>
 
 <button id="createAccountBtn">Create an account</button>
 
@@ -31,7 +33,9 @@
 document.getElementById("githubBtn").addEventListener("click", () => {
     window.location.href = "/login_github";
 });
-
+document.getElementById("oauthBtn").addEventListener("click", () => {
+    window.location.href = "/login_oauth";
+});
 document.getElementById("createAccountBtn").addEventListener("click", () => {
     window.location.href = "/register";
 });
