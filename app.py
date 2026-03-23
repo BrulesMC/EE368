@@ -2,9 +2,14 @@ from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
+from flask_login import LoginManager
 from datetime import timedelta
 import requests
 import os
+
+from models import db, User as OAuthUser
+from oauth import configure_oauth
+from route import bp as auth_bp
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -12,13 +17,34 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 # Session lifetime
 app.permanent_session_lifetime = timedelta(days=7)
 
-# Database
+
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
 CORS(app, supports_credentials=True)
 
+# Flask-Login (required by route.py's @login_required)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "auth.login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return OAuthUser.query.get(user_id)
+
+app.register_blueprint(auth_bp)
+
+configure_oauth(app)
+
+# Custom OAuth client credentials 
+CUSTOM_CLIENT_ID = os.environ.get("CUSTOM_CLIENT_ID", "client_123")
+CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")   # populated after /init_data
+CUSTOM_REDIRECT_URI = "http://localhost:5000/custom_callback"
+CUSTOM_AUTH_URL = "http://localhost:5000/oauth/authorize"
+CUSTOM_TOKEN_URL = "http://localhost:5000/oauth/token"
+CUSTOM_USERINFO_URL = "http://localhost:5000/oauth/userinfo"
+CUSTOM_SCOPE = "profile"
 
 # GitHub OAuth Credentials
 GITHUB_CLIENT_ID = "Ov23liYnjEz7sbKDdfhQ"
@@ -26,14 +52,14 @@ GITHUB_CLIENT_SECRET = "c2602bddacd1641ff61bc4cb4cab9b743f0dc789"
 GITHUB_REDIRECT_URI = "http://localhost:5000/github_callback"
 
 
-
-# User Model
-class User(db.Model):
+# App-level User model
+class AppUser(db.Model):
+    __tablename__ = "app_user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(200), nullable=True)
-    type = db.Column(db.String(20), nullable=False, default="standard")  # standard | github
+    type = db.Column(db.String(20), nullable=False, default="standard")  # standard | github | custom
 
     def to_dict(self):
         return {
@@ -45,16 +71,16 @@ class User(db.Model):
 
 
 # Helpers
-def login_user(user):
+def login_user_session(user):
     session["user_id"] = user.id
-    session.permanent = True   # RESTORED
+    session.permanent = True
 
 
 def current_user():
     uid = session.get("user_id")
     if not uid:
         return None
-    return User.query.get(uid)
+    return AppUser.query.get(uid)
 
 
 # HTML Routes
@@ -80,7 +106,8 @@ def home_page():
     return render_template("home.html")
 
 
-# API: Register (email + username + password)
+# API: Register
+
 @app.route("/api/register", methods=["POST"])
 def register():
     data = request.json or {}
@@ -91,13 +118,13 @@ def register():
     if not username or not email or not password:
         return jsonify({"error": "username, email, and password required"}), 400
 
-    if User.query.filter_by(username=username).first():
+    if AppUser.query.filter_by(username=username).first():
         return jsonify({"error": "username already exists"}), 400
 
-    if User.query.filter_by(email=email).first():
+    if AppUser.query.filter_by(email=email).first():
         return jsonify({"error": "email already in use"}), 400
 
-    user = User(
+    user = AppUser(
         username=username,
         email=email,
         password_hash=generate_password_hash(password),
@@ -106,11 +133,11 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    login_user(user)
+    login_user_session(user)
     return jsonify({"success": True, "user": user.to_dict()}), 201
 
 
-# API: Standard Login (email + password)
+# API: Standard Login
 @app.route("/api/login_standard", methods=["POST"])
 def login_standard():
     data = request.json or {}
@@ -120,7 +147,7 @@ def login_standard():
     if not email or not password:
         return jsonify({"error": "email and password required"}), 400
 
-    user = User.query.filter_by(email=email, type="standard").first()
+    user = AppUser.query.filter_by(email=email, type="standard").first()
 
     if not user or not user.password_hash:
         return jsonify({"error": "invalid credentials"}), 401
@@ -128,11 +155,11 @@ def login_standard():
     if not check_password_hash(user.password_hash, password):
         return jsonify({"error": "invalid credentials"}), 401
 
-    login_user(user)
+    login_user_session(user)
     return jsonify({"success": True, "user": user.to_dict()})
 
 
-# GitHub Login (Server-Side OAuth)
+# GitHub OAuth
 @app.route("/login_github")
 def login_github_redirect():
     params = {
@@ -150,7 +177,6 @@ def github_callback():
     if not code:
         return redirect("/")
 
-    # Exchange code for access token
     token_res = requests.post(
         "https://github.com/login/oauth/access_token",
         headers={"Accept": "application/json"},
@@ -166,13 +192,11 @@ def github_callback():
     if not access_token:
         return redirect("/")
 
-    # Fetch GitHub user info
     user_res = requests.get(
         "https://api.github.com/user",
         headers={"Authorization": f"Bearer {access_token}"}
     ).json()
 
-    # Fetch email list
     email_res = requests.get(
         "https://api.github.com/user/emails",
         headers={"Authorization": f"Bearer {access_token}"}
@@ -189,37 +213,97 @@ def github_callback():
 
     username = user_res.get("login")
 
-    # Auto-create or fetch user
-    user = User.query.filter_by(email=email).first()
+    user = AppUser.query.filter_by(email=email).first()
     if not user:
         base = username
         i = 1
-        while User.query.filter_by(username=username).first():
+        while AppUser.query.filter_by(username=username).first():
             username = f"{base}_{i}"
             i += 1
 
-        user = User(
-            username=username,
-            email=email,
-            password_hash=None,
-            type="github"
-        )
+        user = AppUser(username=username, email=email, password_hash=None, type="github")
         db.session.add(user)
         db.session.commit()
 
-    login_user(user)
+    login_user_session(user)
     return redirect("/home")
 
 
-# API: Reset Password (standard users only)
+# Custom OAuth
+@app.route("/login_custom")
+def login_custom_redirect():
+    """Redirect the user to the local OAuth server's authorization endpoint."""
+    params = {
+        "client_id": CUSTOM_CLIENT_ID,
+        "redirect_uri": CUSTOM_REDIRECT_URI,
+        "scope": CUSTOM_SCOPE,
+        "response_type": "code",
+    }
+    query = "&".join([f"{k}={v}" for k, v in params.items()])
+    return redirect(f"{CUSTOM_AUTH_URL}?{query}")
+
+
+@app.route("/custom_callback")
+def custom_callback():
+    """Exchange the authorization code for a token, then fetch the user's profile."""
+    code = request.args.get("code")
+    if not code:
+        return redirect("/")
+
+    # Exchange code for access token using client_secret_basic
+    token_res = requests.post(
+        CUSTOM_TOKEN_URL,
+        auth=(CUSTOM_CLIENT_ID, CUSTOM_CLIENT_SECRET),
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": CUSTOM_REDIRECT_URI,
+        }
+    ).json()
+
+    access_token = token_res.get("access_token")
+    if not access_token:
+        return redirect("/")
+
+    # Fetch user info from /oauth/userinfo
+    # Returns {"name": ..., "email": ...}
+    user_res = requests.get(
+        CUSTOM_USERINFO_URL,
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+
+    email = user_res.get("email")
+    username = user_res.get("name") or email
+
+    if not email:
+        return redirect("/")
+
+    # Create or fetch the AppUser
+    user = AppUser.query.filter_by(email=email).first()
+    if not user:
+        base = username
+        i = 1
+        while AppUser.query.filter_by(username=username).first():
+            username = f"{base}_{i}"
+            i += 1
+
+        user = AppUser(username=username, email=email, password_hash=None, type="custom")
+        db.session.add(user)
+        db.session.commit()
+
+    login_user_session(user)
+    return redirect("/home")
+
+
+# API: Reset Password
 @app.route("/api/reset_password", methods=["POST"])
 def reset_password():
     user = current_user()
     if not user:
         return jsonify({"error": "not logged in"}), 401
 
-    if user.type == "github":
-        return jsonify({"error": "GitHub users cannot reset password"}), 400
+    if user.type != "standard":
+        return jsonify({"error": "Only standard users can reset their password"}), 400
 
     data = request.json or {}
     new_password = data.get("new_password")
@@ -233,7 +317,7 @@ def reset_password():
     return jsonify({"success": True})
 
 
-# API: Me
+# API: Me / Logout
 @app.route("/api/me")
 def me():
     user = current_user()
@@ -242,7 +326,6 @@ def me():
     return jsonify(user.to_dict())
 
 
-# API: Logout
 @app.route("/api/logout", methods=["POST"])
 def logout():
     session.pop("user_id", None)
@@ -253,5 +336,4 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
     app.run(debug=True)
