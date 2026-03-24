@@ -7,10 +7,11 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model, UserMixin):
+    __tablename__ = "oauth_user"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), unique=False, nullable=False)
+    username = db.Column(db.String(255), unique=False, nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
 
     def __str__(self):
         return self.email
@@ -25,9 +26,9 @@ class Client(db.Model, OAuth2ClientMixin):
 
 class AuthorizationCode(db.Model, OAuth2AuthorizationCodeMixin):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('oauth_user.id'), nullable=False)
 
 
 class Token(db.Model, OAuth2TokenMixin):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('oauth_user.id'), nullable=False)
