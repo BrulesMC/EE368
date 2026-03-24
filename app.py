@@ -6,11 +6,11 @@ from flask_login import LoginManager
 from datetime import timedelta
 import requests
 import os
-
+from dotenv import load_dotenv
 from models import db, User as OAuthUser
 from oauth import configure_oauth
 from route import bp as auth_bp
-
+load_dotenv()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
@@ -37,7 +37,7 @@ app.register_blueprint(auth_bp)
 
 configure_oauth(app)
 
-# Custom OAuth client credentials 
+# Custom OAuth client credentials
 CUSTOM_CLIENT_ID = os.environ.get("CUSTOM_CLIENT_ID", "client_123")
 CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")   # populated after /init_data
 CUSTOM_REDIRECT_URI = "http://localhost:5000/custom_callback"
@@ -45,7 +45,7 @@ CUSTOM_AUTH_URL = "http://localhost:5000/oauth/authorize"
 CUSTOM_TOKEN_URL = "http://localhost:5000/oauth/token"
 CUSTOM_USERINFO_URL = "http://localhost:5000/oauth/userinfo"
 CUSTOM_SCOPE = "profile"
-
+CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")
 # GitHub OAuth Credentials
 GITHUB_CLIENT_ID = "Ov23liYnjEz7sbKDdfhQ"
 GITHUB_CLIENT_SECRET = "c2602bddacd1641ff61bc4cb4cab9b743f0dc789"
@@ -242,6 +242,9 @@ def login_custom_redirect():
     query = "&".join([f"{k}={v}" for k, v in params.items()])
     return redirect(f"{CUSTOM_AUTH_URL}?{query}")
 
+@app.route("/login_oauth")
+def login_oauth_alias():
+    return redirect("/login_custom")
 
 @app.route("/custom_callback")
 def custom_callback():
