@@ -7,6 +7,22 @@ from datetime import timedelta
 import requests
 import os
 from dotenv import load_dotenv
+import subprocess
+import sys
+
+# Start Oauth server
+def start_oauth_server():
+    oauth_path = os.path.join(os.path.dirname(__file__), "oauth_server.py")
+    process = subprocess.Popen(
+        [sys.executable, oauth_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
+    )
+
+    print(f"[Main App] OAuth server started on port 5001 (PID={process.pid})")
+    return process
 
 load_dotenv()
 
@@ -310,6 +326,11 @@ def logout():
 
 # Run
 if __name__ == "__main__":
+    oauth_process = start_oauth_server()
+
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    finally:
+        oauth_process.terminate()
