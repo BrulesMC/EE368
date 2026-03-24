@@ -8,6 +8,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import subprocess
+import threading
 import sys
 
 # Start Oauth server
@@ -16,12 +17,16 @@ def start_oauth_server():
     process = subprocess.Popen(
         [sys.executable, oauth_path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        text=True,
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
     )
 
     print(f"[Main App] OAuth server started on port 5001 (PID={process.pid})")
+    def stream_output():
+        for line in process.stdout:
+            print("[OAuth]", line, end="")
+    # threading.Thread(target=stream_output, daemon=True).start()
     return process
 
 load_dotenv()
