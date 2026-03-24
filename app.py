@@ -7,52 +7,28 @@ from datetime import timedelta
 import requests
 import os
 from dotenv import load_dotenv
-from models import db, User as OAuthUser
-from oauth import configure_oauth
-from route import bp as auth_bp
+
 load_dotenv()
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 # Session lifetime
 app.permanent_session_lifetime = timedelta(days=7)
 
-
+# Database
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db.init_app(app)
+db = SQLAlchemy(app)
 CORS(app, supports_credentials=True)
 
-# Flask-Login (required by route.py's @login_required)
+# Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "auth.login"
+login_manager.login_view = "login_page"
 
-@login_manager.user_loader
-def load_user(user_id):
-    return OAuthUser.query.get(user_id)
-
-app.register_blueprint(auth_bp)
-
-configure_oauth(app)
-
-# Custom OAuth client credentials
-CUSTOM_CLIENT_ID = os.environ.get("CUSTOM_CLIENT_ID", "client_123")
-CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")   # populated after /init_data
-CUSTOM_REDIRECT_URI = "http://localhost:5000/custom_callback"
-CUSTOM_AUTH_URL = "http://localhost:5000/oauth/authorize"
-CUSTOM_TOKEN_URL = "http://localhost:5000/oauth/token"
-CUSTOM_USERINFO_URL = "http://localhost:5000/oauth/userinfo"
-CUSTOM_SCOPE = "profile"
-CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")
-# GitHub OAuth Credentials
-GITHUB_CLIENT_ID = "Ov23liYnjEz7sbKDdfhQ"
-GITHUB_CLIENT_SECRET = "c2602bddacd1641ff61bc4cb4cab9b743f0dc789"
-GITHUB_REDIRECT_URI = "http://localhost:5000/github_callback"
-
-
-# App-level User model
+# Main App User Model
 class AppUser(db.Model):
     __tablename__ = "app_user"
     id = db.Column(db.Integer, primary_key=True)
@@ -69,12 +45,15 @@ class AppUser(db.Model):
             "type": self.type
         }
 
+# Flask-Login Loader
+@login_manager.user_loader
+def load_user(user_id):
+    return AppUser.query.get(user_id)
 
-# Helpers
+# Helper Functions
 def login_user_session(user):
     session["user_id"] = user.id
     session.permanent = True
-
 
 def current_user():
     uid = session.get("user_id")
@@ -82,22 +61,36 @@ def current_user():
         return None
     return AppUser.query.get(uid)
 
+# OAuth Client Config
+
+# Custom OAuth client credentials
+CUSTOM_CLIENT_ID = os.environ.get("CUSTOM_CLIENT_ID", "client_123")
+CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")
+CUSTOM_REDIRECT_URI = "http://127.0.0.1:5000/custom_callback"
+
+# IMPORTANT: OAuth server runs on port 5001
+CUSTOM_AUTH_URL = "http://127.0.0.1:5001/oauth/authorize"
+CUSTOM_TOKEN_URL = "http://127.0.0.1:5001/oauth/token"
+CUSTOM_USERINFO_URL = "http://127.0.0.1:5001/oauth/userinfo"
+CUSTOM_SCOPE = "profile"
+
+# GitHub OAuth Credentials
+GITHUB_CLIENT_ID = "Ov23liYnjEz7sbKDdfhQ"
+GITHUB_CLIENT_SECRET = "c2602bddacd1641ff61bc4cb4cab9b743f0dc789"
+GITHUB_REDIRECT_URI = "http://127.0.0.1:5000/github_callback"
 
 # HTML Routes
 @app.route("/")
 def login_page():
     return render_template("login.html")
 
-
 @app.route("/register")
 def register_page():
     return render_template("register.html")
 
-
 @app.route("/reset")
 def reset_page():
     return render_template("reset.html")
-
 
 @app.route("/home")
 def home_page():
@@ -105,9 +98,7 @@ def home_page():
         return redirect("/")
     return render_template("home.html")
 
-
 # API: Register
-
 @app.route("/api/register", methods=["POST"])
 def register():
     data = request.json or {}
@@ -136,7 +127,6 @@ def register():
     login_user_session(user)
     return jsonify({"success": True, "user": user.to_dict()}), 201
 
-
 # API: Standard Login
 @app.route("/api/login_standard", methods=["POST"])
 def login_standard():
@@ -158,7 +148,6 @@ def login_standard():
     login_user_session(user)
     return jsonify({"success": True, "user": user.to_dict()})
 
-
 # GitHub OAuth
 @app.route("/login_github")
 def login_github_redirect():
@@ -169,7 +158,6 @@ def login_github_redirect():
     }
     query = "&".join([f"{k}={v}" for k, v in params.items()])
     return redirect(f"https://github.com/login/oauth/authorize?{query}")
-
 
 @app.route("/github_callback")
 def github_callback():
@@ -228,11 +216,9 @@ def github_callback():
     login_user_session(user)
     return redirect("/home")
 
-
-# Custom OAuth
+# Custom OAuth (Port 5001)
 @app.route("/login_custom")
 def login_custom_redirect():
-    """Redirect the user to the local OAuth server's authorization endpoint."""
     params = {
         "client_id": CUSTOM_CLIENT_ID,
         "redirect_uri": CUSTOM_REDIRECT_URI,
@@ -242,18 +228,12 @@ def login_custom_redirect():
     query = "&".join([f"{k}={v}" for k, v in params.items()])
     return redirect(f"{CUSTOM_AUTH_URL}?{query}")
 
-@app.route("/login_oauth")
-def login_oauth_alias():
-    return redirect("/login_custom")
-
 @app.route("/custom_callback")
 def custom_callback():
-    """Exchange the authorization code for a token, then fetch the user's profile."""
     code = request.args.get("code")
     if not code:
         return redirect("/")
 
-    # Exchange code for access token using client_secret_basic
     token_res = requests.post(
         CUSTOM_TOKEN_URL,
         auth=(CUSTOM_CLIENT_ID, CUSTOM_CLIENT_SECRET),
@@ -268,8 +248,6 @@ def custom_callback():
     if not access_token:
         return redirect("/")
 
-    # Fetch user info from /oauth/userinfo
-    # Returns {"name": ..., "email": ...}
     user_res = requests.get(
         CUSTOM_USERINFO_URL,
         headers={"Authorization": f"Bearer {access_token}"}
@@ -281,7 +259,6 @@ def custom_callback():
     if not email:
         return redirect("/")
 
-    # Create or fetch the AppUser
     user = AppUser.query.filter_by(email=email).first()
     if not user:
         base = username
@@ -296,7 +273,6 @@ def custom_callback():
 
     login_user_session(user)
     return redirect("/home")
-
 
 # API: Reset Password
 @app.route("/api/reset_password", methods=["POST"])
@@ -319,7 +295,6 @@ def reset_password():
 
     return jsonify({"success": True})
 
-
 # API: Me / Logout
 @app.route("/api/me")
 def me():
@@ -328,12 +303,10 @@ def me():
         return jsonify({"error": "not logged in"}), 401
     return jsonify(user.to_dict())
 
-
 @app.route("/api/logout", methods=["POST"])
 def logout():
     session.pop("user_id", None)
     return jsonify({"success": True})
-
 
 # Run
 if __name__ == "__main__":
