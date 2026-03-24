@@ -15,7 +15,7 @@ class Config:
     SESSION_COOKIE_NAME = 'session_auth_server' # Ensure unique session cookie name
     # TODO: Replace below with your database credentials
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URI', 'mysql+mysqlconnector://drew:Diamondo132!@localhost/oauth_Server'
+        'DATABASE_URI', 'mysql+mysqlconnector://<username>:<password>@localhost/oauth_Server'
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
