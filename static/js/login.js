@@ -1,33 +1,45 @@
-document.addEventListener('DOMContentLoaded', function () {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
 
-    const form = document.getElementById('loginForm');
+<h1>Login</h1>
 
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
+<form id="loginForm">
+    <label>Email:</label>
+    <input type="email" id="email" required><br><br>
 
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+    <label>Password:</label>
+    <input type="password" id="password" required><br><br>
 
-        fetch('/api/login_standard', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = '/home';
-            } else {
-                alert('Login failed: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred during login.');
-        });
-    });
+    <button type="submit">Login</button>
+</form>
 
+<br>
+
+<button id="githubBtn">Login with GitHub</button>
+<br><br>
+<button id="oauthBtn">Login with Oauth</button>
+<br><br>
+
+<button id="createAccountBtn">Create an account</button>
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+<script>
+document.getElementById("githubBtn").addEventListener("click", () => {
+    window.location.href = "/login_github";
 });
+document.getElementById("oauthBtn").addEventListener("click", () => {
+    window.location.href = "/login_custom";
+});
+document.getElementById("createAccountBtn").addEventListener("click", () => {
+    window.location.href = "/register";
+});
+</script>
+
+</body>
+</html>
