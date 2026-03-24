@@ -24,13 +24,11 @@ def init_data():
     user = User.query.filter_by(email="john@gmail.com").first()
     if not user:
         user = User()
-        user.username = "John Doe"
+        user.name = "John Doe"
         user.email = "john@gmail.com"
-        user.password_hash = generate_password_hash("12345")
+        user.password = generate_password_hash("12345")
+
         db.session.add(user)
-        db.session.commit()
-    elif not user.password_hash:
-        user.password_hash = generate_password_hash("12345")
         db.session.commit()
 
     client = Client.query.filter_by(client_id="client_123").first()
@@ -41,7 +39,7 @@ def init_data():
         client.client_id_issued_at = time.time()
         client.client_secret_expires_at = 0  # never expires
         client.set_client_metadata({
-            "redirect_uris": ["http://localhost:5000/custom_callback"],
+            "redirect_uris": ["http://127.0.0.1:5000/custom_callback"],
             "response_types": ["code", "token"],
             "scope": "profile",
             "grant_types": ["authorization_code"],
@@ -71,7 +69,7 @@ def authorize():
                 f"<h3>{grant.client.client_name} ({grant.client.client_id}) want to access your resources</h3>"
                 f"<button type='submit' name='approve' value='1'>Approve</button>"
                 f"<button type='submit' name='deny' value='1'>Deny</button>"
-                f"</form>")
+                f"</(form>")
     else:  # POST
         grant_user = current_user if 'approve' in request.form else None
         return auth_server.create_authorization_response(grant_user=grant_user)
@@ -87,7 +85,7 @@ def issue_token():
 def userinfo():
     user = User.query.get(current_token.user_id)
     return jsonify({
-        'name': user.username,
+        'name': user.name,
         'email': user.email
     })
 
@@ -98,7 +96,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password_hash, password):
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(request.args.get('next') or '/')
         return 'Invalid credentials', 401
