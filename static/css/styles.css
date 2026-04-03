@@ -1,0 +1,143 @@
+/* Catppuccin Mocha Theme Colors */
+:root {
+  --base: #1e1e2e;         /* Base */
+  --crust: #11111b;        /* Crust */
+  --mantle: #181826;       /* Mantle */
+  --mauve: #cba6f7;        /* Mauve */
+  --lavender: #b4befe;     /* Lavender */
+  --blue: #89b4fa;         /* Blue */
+  --pink: #f5c2e7;         /* Pink */
+  --red: #f38ba8;          /* Red */
+  --green: #a6e3a1;        /* Green */
+  --yellow: #f9e2af;       /* Yellow */
+  --orange: #fab387;       /* Orange */
+  --peach: #f9a8d4;        /* Peach */
+  --rosewater: #f5e0dc;    /* Rosewater */
+}
+
+/* Global Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--base);
+  color: var(--lavender);   /* Text color */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+
+/* Header Styles */
+h1 {
+  color: var(--blue);      /* Blue */
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Form Styles */
+form {
+  background-color: var(--mantle);  /* Mantle */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+label {
+  color: var(--lavender);  /* Lavender */
+  font-size: 1rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  border-radius: 6px;
+  border: 2px solid var(--mauve);  /* Mauve */
+  background-color: var(--crust);   /* Crust */
+  color: var(--lavender);
+  font-size: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: var(--blue);  /* Blue on focus */
+  outline: none;
+}
+
+/* Button Styles */
+button {
+  background-color: var(--blue);  /* Blue */
+  color: var(--base);              /* Base */
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 10px;
+}
+
+button:hover {
+  background-color: var(--mauve); /* Mauve on hover */
+}
+
+/* Custom Button Styles */
+#githubBtn,
+#oauthBtn,
+#createAccountBtn {
+  background-color: var(--crust);
+  color: var(--lavender);
+  padding: 10px;
+  border-radius: 6px;
+  border: 2px solid var(--mauve);  /* Mauve border */
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+#githubBtn:hover,
+#oauthBtn:hover,
+#createAccountBtn:hover {
+  background-color: var(--mauve);
+  color: var(--base);
+}
+
+/* Specific Button Styles */
+#logoutBtn {
+  background-color: var(--mauve);  /* Mauve */
+  color: var(--base);
+}
+
+#resetBtn {
+  background-color: var(--crust);  /* Crust */
+  color: var(--lavender);
+}
+
+#logoutBtn:hover {
+  background-color: var(--blue);  /* Blue hover for Logout */
+}
+
+#resetBtn:hover {
+  background-color: var(--mauve);  /* Mauve hover for Reset Password */
+}
+
+/* Home Button Styles */
+button {
+  margin-top: 10px;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
