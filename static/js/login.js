@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('loginForm');
     const githubBtn = document.getElementById('githubLoginBtn');
 
+    const errorMsg = document.createElement('p');
+    errorMsg.style.color = 'red';
+    errorMsg.style.display = 'none';
+    form.appendChild(errorMsg);
+    
     // Standard login submit
     form.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -23,12 +28,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 window.location.href = '/home';
             } else {
-                alert('Login failed: ' + (data.error || 'Unknown error'));
+               errorMsg.textContent = 'Login failed: ' + (data.error || 'Incorrect email or password');
+                errorMsg.style.display = 'block';
+                document.getElementById('password').walue = '';
+                document.getElementById('password').focus();
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred during login.');
+            errorMsg.textContent = 'An error occurred during login.';
+            error.Msg.style.display = 'block';
         });
     });
 
