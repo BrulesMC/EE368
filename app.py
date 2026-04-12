@@ -177,8 +177,11 @@ def login_github_redirect():
         "redirect_uri": GITHUB_REDIRECT_URI,
         "scope": "user:email"
     }
-    query = "&".join([f"{k}={v}" for k, v in params.items()])
-    return redirect(f"https://github.com/login/oauth/authorize?{query}")
+    if (0 != (subproccess.call("ping github.com"))):
+        redirect(:"error")
+    else:
+        query = "&".join([f"{k}={v}" for k, v in params.items()])
+        return redirect(f"https://github.com/login/oauth/authorize?{query}")
 
 @app.route("/github_callback")
 def github_callback():
