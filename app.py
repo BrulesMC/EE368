@@ -332,6 +332,10 @@ def logout():
     session.pop("user_id", None)
     return jsonify({"success": True})
 
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("404.html"), 404
+
 # Run
 if __name__ == "__main__":
     oauth_process = start_oauth_server()
