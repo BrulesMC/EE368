@@ -178,7 +178,7 @@ def login_github_redirect():
         "scope": "user:email"
     }
     if (0 != (subproccess.call("ping github.com"))):
-        redirect(:"error")
+        return redirect(f"http://127.0.0.1:5001/503", code=503)
     else:
         query = "&".join([f"{k}={v}" for k, v in params.items()])
         return redirect(f"https://github.com/login/oauth/authorize?{query}")
