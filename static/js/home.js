@@ -1,24 +1,31 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  //get current use
+  // Get current user (checks existing session via cookies)
   const res = await fetch('/api/me', {
     credentials: 'include'
   });
-  //if we did not get a user they are not logged in, redirect to login
+
+  // If no valid user, redirect to login/home page
   if (!res.ok) {
     window.location.href = '/';
     return;
   }
-  //if we are good get user data
+
+  // Parse user data from response
   const user = await res.json();
-  //username
+
+  // Use username if available, otherwise fall back to email
   const fullName = user.username || user.email;
+
+  // Show welcome message in UI
   document.getElementById('welcome').textContent =
     'Hello ' + fullName + ', you have logged in';
-  //no reset button if github user
+
+  // Hide reset button for GitHub users (no password to reset)
   if (user.type === "github") {
     document.getElementById('resetBtn').style.display = "none";
   }
-  //setup the logout button
+
+  // Log out user: clear session on server, then redirect
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await fetch('/api/logout', {
       method: 'POST',
@@ -26,7 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     window.location.href = '/';
   });
-  //setup reset button if is still there
+
+  // Navigate to reset page (only relevant for non-GitHub users)
   document.getElementById('resetBtn').addEventListener('click', () => {
     window.location.href = '/reset';
   });
