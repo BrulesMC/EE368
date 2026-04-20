@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'Hello ' + fullName + ', you have logged in';
 
   // Hide reset button for GitHub users (no password to reset)
-  if (user.type === "github") {
+  if (user.type != "standard") {
     document.getElementById('resetBtn').style.display = "none";
   }
 

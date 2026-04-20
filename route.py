@@ -41,7 +41,7 @@ def init_data():
         client.client_id_issued_at = time.time()
         client.client_secret_expires_at = 0  # never expires
         client.set_client_metadata({
-            "redirect_uris": ["http://localhost:5000/custom_callback"],
+            "redirect_uris": ["http://127.0.0.1:5000/custom_callback"],
             "response_types": ["code", "token"],
             "scope": "profile",
             "grant_types": ["authorization_code"],

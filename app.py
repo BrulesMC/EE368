@@ -86,7 +86,7 @@ def current_user():
 
 # Custom OAuth client credentials
 CUSTOM_CLIENT_ID = os.environ.get("CUSTOM_CLIENT_ID", "client_123")
-CUSTOM_CLIENT_SECRET = os.environ.get("CUSTOM_CLIENT_SECRET", "")
+CUSTOM_CLIENT_SECRET = "hTa1MgxhIoaMXY9o40NqwAOTxIvTTbwOT5raS64dxBQthXJS"
 CUSTOM_REDIRECT_URI = "http://127.0.0.1:5000/custom_callback"
 
 # IMPORTANT: OAuth server runs on port 5001
@@ -96,8 +96,8 @@ CUSTOM_USERINFO_URL = "http://127.0.0.1:5001/oauth/userinfo"
 CUSTOM_SCOPE = "profile"
 
 # GitHub OAuth Credentials
-GITHUB_CLIENT_ID = "Ov23liYnjEz7sbKDdfhQ"
-GITHUB_CLIENT_SECRET = "c2602bddacd1641ff61bc4cb4cab9b743f0dc789"
+GITHUB_CLIENT_ID = "Ov23lioNpXfMKiNkpxGA"
+GITHUB_CLIENT_SECRET = "6a73ba649519bd581b24efa388523f9e70abf005"
 GITHUB_REDIRECT_URI = "http://127.0.0.1:5000/github_callback"
 
 # HTML Routes
@@ -177,7 +177,7 @@ def login_github_redirect():
         "redirect_uri": GITHUB_REDIRECT_URI,
         "scope": "user:email"
     }
-    if (0 != (subproccess.call("ping github.com"))):
+    if (0 != (subprocess.call(["ping", "-c", "1", "github.com"]))):
         return redirect(f"http://127.0.0.1:5001/503", code=503)
     else:
         query = "&".join([f"{k}={v}" for k, v in params.items()])
@@ -267,6 +267,7 @@ def custom_callback():
             "redirect_uri": CUSTOM_REDIRECT_URI,
         }
     ).json()
+    print("CLIENT SECRET USED:" + CUSTOM_CLIENT_SECRET)
 
     access_token = token_res.get("access_token")
     if not access_token:
@@ -339,7 +340,6 @@ def not_found(error):
 # Run
 if __name__ == "__main__":
     oauth_process = start_oauth_server()
-
     with app.app_context():
         db.create_all()
     try:
