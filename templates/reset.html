@@ -1,28 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Change Password</title>
+    <meta charset="UTF-8">
+    <title>Reset Password</title>
 </head>
 <body>
 
-<main>
-  <h1>Change Password</h1>
+<h1>Reset Password</h1>
 
-  <form id="resetForm">
-    <label for="newPassword">New Password:</label>
-    <input type="password" id="newPassword" required><br><br>
+<form id="resetForm">
+    <label>New Password:</label>
+    <input type="password" id="new_password" required><br><br>
 
-    <label for="confirmPassword">Confirm New Password:</label>
-    <input type="password" id="confirmPassword" required><br><br>
+    <button type="submit">Update Password</button>
+</form>
 
-    <button type="submit">Change Password</button>
-  </form>
-
-  <button id="backHomeBtn">Back to Home</button>
-</main>
+<br>
+<a href="/home">Back to home</a>
 
 <script src="{{ url_for('static', filename='js/reset.js') }}"></script>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </body>
 </html>

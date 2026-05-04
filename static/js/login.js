@@ -1,32 +1,58 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Get form and GitHub login button from the page
     const form = document.getElementById('loginForm');
+    const githubBtn = document.getElementById('githubLoginBtn');
 
+    // Create and attach a hidden error message element for login feedback
+    const errorMsg = document.createElement('p');
+    errorMsg.style.color = 'red';
+    errorMsg.style.display = 'none';
+    form.appendChild(errorMsg);
+    
+    // Handle standard email/password login submission
     form.addEventListener('submit', function (event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault(); // Prevent page reload
 
-        const username = document.getElementById('user_name').value;
+        // Get user input from form fields
+        const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        // Send POST request to the hidden endpoint
-        fetch('/api/login', {
+        // Send login request to server
+        fetch('/api/login_standard', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ email, password })
         })
         .then(response => response.json())
         .then(data => {
+            // If login successful, redirect to home page
             if (data.success) {
-                // Redirect to the home page or another route
                 window.location.href = '/home';
             } else {
-                alert('Login failed: ' + data.message);
+                // Show error message and reset password field for retry
+                errorMsg.textContent = 'Login failed: ' + (data.error || 'Incorrect email or password');
+                errorMsg.style.display = 'block';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
             }
         })
         .catch(error => {
+            // Handle network/server errors
             console.error('Error:', error);
-            alert('An error occurred during login.');
+            errorMsg.textContent = 'An error occurred during login.';
+            errorMsg.style.display = 'block';
         });
     });
+
+    // Redirect user to GitHub OAuth flow when button is clicked
+    if (githubBtn) {
+        githubBtn.addEventListener('click', function () {
+            window.location.href = '/api/login_github';
+        });
+    }
+
 });

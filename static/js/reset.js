@@ -1,44 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const resetForm = document.getElementById('resetForm');
-  const backHomeBtn = document.getElementById('backHomeBtn');
 
-  resetForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    // Get the password reset form from the page
+    const form = document.getElementById('resetForm');
 
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+    // Handle form submission for updating password
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Prevent page reload
 
-    if (newPassword !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+        // Get new password input from user
+        const new_password = document.getElementById('new_password').value;
 
-    try {
-      const response = await fetch('/api/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ new_password: newPassword })
-      });
+        // Send password update request to server
+        const res = await fetch('/api/reset_password', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_password })
+        });
 
-      const data = await response.json();
+        // Parse server response
+        const data = await res.json();
 
-      if (!response.ok) {
-        alert(data.message || "Error changing password");
-        return;
-      }
+        // If update succeeds, notify user and redirect to home
+        if (data.success) {
+            alert("Password updated!");
+            window.location.href = '/home';
+        } else {
+            // Show error if password update fails
+            alert(data.error || "Error updating password");
+        }
+    });
 
-      alert("Password changed successfully! You will be logged out.");
-
-      // Auto logout
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.href = '/';
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong!");
-    }
-  });
-
-  backHomeBtn.addEventListener('click', () => {
-    window.location.href = '/home';
-  });
 });
